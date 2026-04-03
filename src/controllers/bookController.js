@@ -1,4 +1,5 @@
 const Book = require("../models/Book");
+const Author = require("../models/Author");
 const Student = require("../models/Student");
 const Attendant = require("../models/Attendant");
 
@@ -21,7 +22,15 @@ exports.getAllBooks = async (req, res, next) => {
 
     const filter = {};
     if (req.query.search) {
-      filter.title = { $regex: req.query.search, $options: "i" };
+      const searchRegex = { $regex: req.query.search, $options: "i" };
+
+      // Find authors matching the search term
+      const matchingAuthors = await Author.find({ name: searchRegex }).select(
+        "_id"
+      );
+      const authorIds = matchingAuthors.map((a) => a._id);
+
+      filter.$or = [{ title: searchRegex }, { authors: { $in: authorIds } }];
     }
 
     const [books, total] = await Promise.all([
@@ -178,6 +187,24 @@ exports.returnBook = async (req, res, next) => {
       message: "Book returned successfully",
       data: book,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get all overdue books (borrowed books past their return date)
+exports.getOverdueBooks = async (req, res, next) => {
+  try {
+    const books = await Book.find({
+      status: "OUT",
+      returnDate: { $lt: new Date() },
+    })
+      .populate("authors")
+      .populate("borrowedBy")
+      .populate("issuedBy")
+      .sort({ returnDate: 1 });
+
+    res.json({ success: true, count: books.length, data: books });
   } catch (error) {
     next(error);
   }

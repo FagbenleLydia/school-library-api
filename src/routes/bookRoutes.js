@@ -9,6 +9,7 @@ const {
   deleteBook,
   borrowBook,
   returnBook,
+  getOverdueBooks,
 } = require("../controllers/bookController");
 
 /**
@@ -52,11 +53,29 @@ const {
  * @swagger
  * /books:
  *   get:
- *     summary: Get all books
+ *     summary: Get all books (with pagination and search)
  *     tags: [Books]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Results per page
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by book title or author name
  *     responses:
  *       200:
- *         description: List of books
+ *         description: Paginated list of books
  *   post:
  *     summary: Create a book
  *     tags: [Books]
@@ -83,6 +102,18 @@ const {
  *         description: Book created
  */
 router.route("/").get(getAllBooks).post(validateBook, createBook);
+
+/**
+ * @swagger
+ * /books/overdue:
+ *   get:
+ *     summary: Get all overdue books (past return date)
+ *     tags: [Books]
+ *     responses:
+ *       200:
+ *         description: List of overdue books
+ */
+router.get("/overdue", getOverdueBooks);
 
 /**
  * @swagger

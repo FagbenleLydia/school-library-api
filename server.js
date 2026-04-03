@@ -5,7 +5,10 @@ const swaggerSpec = require("./src/config/swagger");
 const connectDB = require("./src/config/db");
 const errorHandler = require("./src/middleware/errorHandler");
 
+const { protect } = require("./src/middleware/auth");
+
 // Route imports
+const authRoutes = require("./src/routes/authRoutes");
 const authorRoutes = require("./src/routes/authorRoutes");
 const bookRoutes = require("./src/routes/bookRoutes");
 const studentRoutes = require("./src/routes/studentRoutes");
@@ -18,11 +21,14 @@ app.use(express.json());
 // Swagger docs
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Mount route handlers
-app.use("/authors", authorRoutes);
-app.use("/books", bookRoutes);
-app.use("/students", studentRoutes);
-app.use("/attendants", attendantRoutes);
+// Public routes
+app.use("/auth", authRoutes);
+
+// Protected routes (require JWT)
+app.use("/authors", protect, authorRoutes);
+app.use("/books", protect, bookRoutes);
+app.use("/students", protect, studentRoutes);
+app.use("/attendants", protect, attendantRoutes);
 
 // Quick health check so we know the API is alive
 app.get("/", (req, res) => {
